@@ -1,83 +1,196 @@
-# DeFi Wallet Credit Scoring Model
+# Credit Scoring for Cryptocurrency Wallets
 
-This project implements a machine learning model that assigns credit scores to cryptocurrency wallets based on their transaction history with the Aave V2 protocol. The scores range from 0 to 1000, with higher scores indicating more reliable and responsible usage patterns.
+## Overview
 
-## Features
+This system analyzes transaction data from the Aave V2 protocol to assign credit scores to cryptocurrency wallets. The scores range from 0 to 1000, with higher scores indicating more reliable and responsible usage patterns. The system provides both a rule-based model and an advanced machine learning model for credit scoring.
 
-The credit scoring model analyzes the following aspects of wallet behavior:
+## System Architecture
 
-1. **Repayment Behavior**: How consistently and completely loans are repaid
-2. **Collateralization Ratio**: The ratio of deposits to borrowings
-3. **Account History**: The age and consistency of the account
-4. **Transaction Diversity**: The variety of assets used
-5. **Activity Level**: The frequency and pattern of transactions
-6. **Liquidation History**: Whether the wallet has experienced liquidations
+### Data Flow
 
-## How Scores Are Calculated
+1.  **Input**: JSON file containing transaction records from Aave V2 protocol
+2.  **Processing**: Feature extraction and credit score calculation
+3.  **Output**: CSV file with wallet addresses and credit scores, visualizations
 
-The model uses a rule-based approach with the following components:
+### Components
 
-- Base score: 500 points (middle of the range)
-- Repayment behavior: Up to +200 points for high repay-to-borrow ratio
-- Collateralization: Up to +100 points for high deposit-to-borrow ratio
-- Account history: Up to +100 points for longer account age
-- Transaction diversity: Up to +50 points for using multiple assets
-- Activity level: Up to +50 points for moderate activity
-- Liquidation penalty: -300 points for being liquidated
-- Liquidation severity: Up to -200 additional points based on liquidation amount
+1.  **Analyze Transactions**: `analyze_transactions.py`
+2.  **Basic Model**: `credit_score_model.py`
+3.  **Advanced Model**: `advanced_credit_model.py`
+4.  **Visualization**: `visualize_results.py`
+5.  **Pipeline Runner**: `run_credit_scoring.bat`
 
-## Usage
+## Feature Engineering
+
+The system extracts the following features from transaction data:
+
+### Transaction Counts
+- Number of deposits
+- Number of borrows
+- Number of repayments
+- Number of redemptions
+- Number of liquidations
+
+### Amount Metrics
+- Total deposit amount
+- Total borrow amount
+- Total repay amount
+- Total redeem amount
+- Total liquidation amount
+- Average amounts for each action type
+
+### Ratio Metrics
+- Repay-to-borrow ratio
+- Deposit-to-borrow ratio
+- Liquidation-to-borrow ratio
+
+### Time-based Metrics
+- Account age (days)
+- Transaction frequency
+- Average time between transactions
+- Time since last transaction
+
+### Diversity Metrics
+- Number of unique assets used
+- Asset concentration
+
+### Risk Indicators
+- Liquidation flag
+- Maximum borrow amount
+- Maximum deposit amount
+
+## Credit Scoring Models
+
+### Rule-based Model
+
+The rule-based model calculates credit scores using a weighted combination of key risk indicators:
+
+1.  **Base Score**: 500 points (middle of 0-1000 range)
+2.  **Repayment Behavior**: +200 points for high repay-to-borrow ratio
+3.  **Collateralization**: +100 points for high deposit-to-borrow ratio
+4.  **Account History**: +100 points for longer account age
+5.  **Transaction Diversity**: +50 points for using multiple assets
+6.  **Activity Level**: +50 points for moderate activity
+7.  **Liquidation Penalty**: -300 points for being liquidated
+8.  **Liquidation Severity**: Additional penalty based on liquidation amount ratio
+
+### Machine Learning Model
+
+The advanced model uses ensemble learning techniques to predict credit scores:
+
+1.  **Data Preparation**:
+    - Feature extraction from transaction data
+    - Creation of synthetic labels for training
+    - Feature scaling
+
+2.  **Model Training**:
+    - Random Forest Regressor
+    - Gradient Boosting Regressor
+    - KNN
+    - XGBoost
+    - Model selection based on performance metrics
+
+3.  **Evaluation Metrics**:
+    - Mean Squared Error (MSE)
+    - R-squared (R²)
+
+4.  **Feature Importance Analysis**:
+    - Identification of most predictive features
+    - Visualization of feature importance
+
+## Risk Categories
+
+Based on credit scores, wallets are classified into risk categories:
+
+-   **High Risk** (0-250): Wallets with severe issues, such as multiple liquidations or very low repayment rates
+-   **Medium-High Risk** (250-500): Wallets with concerning patterns, such as low collateralization or inconsistent repayments
+-   **Medium-Low Risk** (500-750): Wallets with generally good behavior but some minor issues
+-   **Low Risk** (750-1000): Wallets with excellent repayment history, good collateralization, and no liquidations
+
+## Usage Instructions
 
 ### Prerequisites
 
-- Python 3.7+
-- Required packages: pandas, numpy, scikit-learn
+-   Python 3.7+
+-   Required packages: pandas, numpy, scikit-learn, matplotlib, seaborn, joblib
 
 ### Installation
 
 ```bash
-pip install pandas numpy scikit-learn
+pip install -r requirements.txt
 ```
 
-### Running the Model
+### Running the Pipeline
 
-1. Place your transaction data in a file named `user-wallet-transactions.json` in the same directory as the script
-2. Run the script:
+1.  Execute the batch script:
 
 ```bash
-python credit_score_model.py
+run_credit_scoring.bat
 ```
 
-3. The results will be saved to `wallet_credit_scores.csv`
+2.  Select the model type:
+    -   Option 1: Basic rule-based model
+    -   Option 2: Advanced machine learning model
 
-## Input Data Format
+3.  Review the results in the output files
 
-The input JSON file should contain an array of transaction objects with the following structure:
+## Output Files
 
-```json
-{
-  "userWallet": "0x...",
-  "network": "polygon",
-  "protocol": "aave_v2",
-  "timestamp": 1629178166,
-  "action": "deposit",
-  "actionData": {
-    "amount": "2000000000",
-    "assetSymbol": "USDC",
-    "userId": "0x..."
-  }
-}
+### Basic Model
+-   `wallet_credit_scores.csv`: Raw credit scores
+-   `score_distribution.png`: Visualization of score distribution
+-   `risk_categories.png`: Visualization of risk categories
+
+### Advanced Model
+-   `wallet_credit_scores_ml.csv`: Raw credit scores from ML model
+-   `credit_score_model.pkl`: Trained ML model
+-   `feature_scaler.pkl`: Feature scaler for the ML model
+-   `feature_importance.png`: Visualization of feature importance
+-   `ml_score_distribution.png`: Visualization of score distribution
+
+## Potential Applications
+
+1.  **Risk Assessment**: Evaluate wallet creditworthiness for undercollateralized loans
+2.  **User Segmentation**: Identify high-value, low-risk users for targeted offerings
+3.  **Fraud Detection**: Flag suspicious activity patterns
+4.  **Protocol Optimization**: Adjust parameters based on user risk profiles
+5.  **Incentive Design**: Create reward systems for responsible protocol usage
+
+## Limitations and Future Work
+
+### Current Limitations
+
+-   Relies solely on on-chain transaction data
+-   Limited historical context for new wallets
+-   No cross-protocol data integration
+
+### Future Improvements
+
+-   Incorporate cross-chain activity data
+-   Add time-series analysis for behavioral changes
+-   Implement anomaly detection for suspicious activities
+-   Develop real-time scoring capabilities
+-   Create API for integration with other DeFi applications
+
+## Technical Details
+
+### Data Normalization
+
+-   Amount values are normalized to standard units (dividing by 10^9 for most tokens)
+-   Categorical features are one-hot encoded
+-   Numerical features are standardized using StandardScaler
+
+### Model Persistence
+
+The trained machine learning model and feature scaler are saved using joblib for future use without retraining:
+
+```python
+joblib.dump(model, 'credit_score_model.pkl')
+joblib.dump(scaler, 'feature_scaler.pkl')
 ```
 
-Supported action types: `deposit`, `borrow`, `repay`, `redeemunderlying`, and `liquidationcall`.
+### Performance Considerations
 
-## Output
-
-The script generates a CSV file with wallet addresses and their corresponding credit scores (0-1000).
-
-## Future Improvements
-
-- Implement more sophisticated machine learning models (Random Forest, XGBoost)
-- Add time-based features to capture behavioral changes
-- Incorporate external data sources for enhanced risk assessment
-- Implement model validation and performance metrics
+-   The system is designed to handle large transaction datasets
+-   Memory optimization techniques are used for feature extraction
+-   Batch processing is implemented for scalability
